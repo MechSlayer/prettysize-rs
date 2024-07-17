@@ -1,9 +1,11 @@
-#![cfg(feature = "std")]
 #![allow(deprecated)]
 
 use crate::Size;
+#[cfg(feature = "alloc")]
+use alloc::format;
 
 #[test]
+#[cfg(feature = "alloc")]
 fn unit_tests() {
     assert_eq!("200 bytes", format!("{}", Size::from_bytes(200)));
     assert_eq!("200 KiB", format!("{}", Size::from_kibibytes(200)));
@@ -11,6 +13,7 @@ fn unit_tests() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn negative_tests() {
     assert_eq!("-200 bytes", format!("{}", Size::from_bytes(-200)));
     assert_eq!("-200 KiB", format!("{}", Size::from_kibibytes(-200)));
@@ -18,6 +21,7 @@ fn negative_tests() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn integral_limits() {
     assert_eq!("8 EiB", format!("{}", Size::from_bytes(i64::MAX)));
     assert_eq!("-8 EiB", format!("{}", Size::from_bytes(i64::MIN)));
@@ -31,6 +35,7 @@ fn integral_limits() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn float_limits() {
     assert_eq!("8 EiB", format!("{}", Size::from_kib(f64::MAX)));
     assert_eq!("-8 EiB", format!("{}", Size::from_kib(f64::MIN)));
@@ -41,6 +46,7 @@ fn float_limits() {
 }
 
 #[test]
+#[cfg(all(feature = "alloc", feature = "f64_intermediate"))]
 /// Make sure invalid floats don't panic. The *actual* result is officially undefined by this
 /// crate's API contract.
 fn invalid_floats() {
@@ -55,6 +61,7 @@ fn invalid_floats() {
 }
 
 #[test]
+
 fn size_equality() {
     assert_eq!(
         Size::from_bytes(200),
@@ -66,6 +73,7 @@ fn size_equality() {
         Size::from_kib(2048),
         "Testing equality of two identical sizes expressed in different units"
     );
+    #[cfg(feature = "f64_intermediate")]
     assert_eq!(
         Size::from_mib(2u8),
         Size::from_mib(2f64),
@@ -76,6 +84,7 @@ fn size_equality() {
         Size::from_kib(2048),
         "Testing equality of two identical sizes expressed in different types"
     );
+    #[cfg(feature = "f64_intermediate")]
     assert_eq!(
         &Size::from_bytes(2097),
         &Size::from_kib(2.048),
@@ -99,8 +108,11 @@ fn size_addition() {
     let size = &Size::from_mib(20) + &Size::from_mib(22);
     assert_eq!(size, Size::Mebibytes(42));
 
+
     // and not as a reference
+    #[cfg(feature = "f64_intermediate")]
     let size = Size::from_mib(20) + Size::from_mib(22_f64);
+    #[cfg(feature = "f64_intermediate")]
     assert_eq!(size, Size::Mebibytes(42));
 }
 
@@ -109,7 +121,9 @@ fn size_subtraction() {
     let size = &Size::from_mib(20) - &Size::from_mib(22);
     assert_eq!(size, Size::Mebibytes(-2));
 
+    #[cfg(feature = "f64_intermediate")]
     let size = Size::from_mib(20) - Size::from_mib(22_f64);
+    #[cfg(feature = "f64_intermediate")]
     assert_eq!(size, Size::Mebibytes(-2));
 }
 
@@ -124,17 +138,22 @@ fn primitive_multiplication() {
     let size = 7 * Size::from_gb(12);
     assert_eq!(size.bytes(), 84000000000);
 
-    // and with other types
-    let size = &Size::from_gb(12) * 7.0;
-    assert_eq!(size.bytes(), 84000000000);
-    let size = 7.0 * &Size::from_gb(12);
-    assert_eq!(size.bytes(), 84000000000);
+    #[cfg(feature = "f64_intermediate")]
+    {
+        // and with other types
+        let size = &Size::from_gb(12) * 7.0;
+        assert_eq!(size.bytes(), 84000000000);
+        let size = 7.0 * &Size::from_gb(12);
+        assert_eq!(size.bytes(), 84000000000);
+    }
 }
 
 #[test]
+#[cfg(feature = "f64_intermediate")]
 fn primitive_division() {
     let size = &Size::from_gb(12) / 13f64;
     assert_eq!(size.bytes(), 923076923);
+
 
     let size = Size::from_gb(12.0) / 13;
     assert_eq!(size.bytes(), 923076923);
@@ -143,6 +162,7 @@ fn primitive_division() {
 /// Floats that cannot be expressed as an `i64` may be instantiated, but give undefined results
 /// when operated on.
 #[test]
+#[cfg(all(feature = "f64_intermediate", feature = "alloc"))]
 fn nan_size() {
     let size = Size::from_kib(f32::NAN);
     let _ = size + Size::from_bytes(1);
@@ -153,6 +173,7 @@ fn nan_size() {
 /// when operated on. The code below panics in debug mode but continues with undefined results in
 /// release mode.
 #[test]
+#[cfg(feature = "std")]
 fn overflow_size() {
     use std::panic;
 
@@ -169,6 +190,7 @@ fn overflow_size() {
 }
 
 #[test]
+#[cfg(feature = "f64_intermediate")]
 fn size_div_assign_f64() {
     let mut size = Size::from_gb(12);
     size /= 13f64;

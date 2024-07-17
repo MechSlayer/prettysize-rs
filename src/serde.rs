@@ -1,7 +1,9 @@
 use crate::Size;
 use serde::de;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
+use core::fmt;
+use alloc::format;
+use alloc::string::ToString;
 
 struct SizeVisitor;
 
@@ -98,7 +100,7 @@ fn test_serialize() {
         size: Size::from_bytes(1024),
     };
     let json = serde_json::to_string(&foo);
-    assert_eq!(json.as_ref().unwrap(), &r#"{"size":1024}"#.to_string());
+    assert_eq!(json.as_ref().unwrap().as_str(), r#"{"size":1024}"#);
 }
 
 #[test]
@@ -140,6 +142,7 @@ fn test_deserialize_f64() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn test_deserialize_overflow() {
     use serde::{Deserialize, Serialize};
 

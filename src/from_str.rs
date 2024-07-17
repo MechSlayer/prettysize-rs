@@ -1,5 +1,4 @@
-use std::error::Error;
-use std::str::FromStr;
+use core::str::FromStr;
 
 use crate::consts::*;
 use crate::Size;
@@ -8,13 +7,15 @@ use crate::Size;
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub struct ParseSizeError;
 
-impl Error for ParseSizeError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSizeError {}
 impl core::fmt::Display for ParseSizeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str("Error parsing Size")
     }
 }
 
+#[cfg(all(feature = "alloc", feature = "f64_intermediate"))]
 impl Size {
     /// Parse a string representation of size to a `Size` value.
     ///
@@ -46,6 +47,7 @@ impl Size {
 /// This test just ensures everything is wired up correctly between the member function
 /// `[Size::from_str()]` and the `FromStr` trait impl.
 #[test]
+#[cfg(all(feature = "alloc", feature = "f64_intermediate"))]
 fn from_str() {
     let input = "12.34 kIloByte";
     let parsed = Size::from_str(input);
@@ -54,11 +56,13 @@ fn from_str() {
 }
 
 #[test]
+#[cfg(all(feature = "alloc", feature = "f64_intermediate"))]
 fn parse() {
     let size = "12.34 kIloByte".parse();
     assert_eq!(size, Ok(Size::from_bytes(12 * KB + 340)));
 }
 
+#[cfg(all(feature = "alloc", feature = "f64_intermediate"))]
 impl FromStr for Size {
     type Err = ParseSizeError;
 
@@ -103,14 +107,16 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(all(feature = "std", feature = "f64_intermediate"))]
     fn parse_bare_bytes() {
         assert_eq!(Size::from_str("1234"), Ok(Size { bytes: 1234 }));
         assert_eq!(Size::from_str(" 1234 "), Ok(Size { bytes: 1234 })); // Leading and trailing whitespace
     }
 
     #[test]
+    #[cfg(all(feature = "std", feature = "f64_intermediate"))]
     fn parse_abbr_unit() {
-        let tests = vec![
+        let tests = crate::alloc::vec![
             ("1234B", 1234),
             ("1234 KB", 1234 * KB),
             ("1234KiB", 1234 * KiB),
@@ -125,8 +131,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "std", feature = "f64_intermediate"))]
     fn parse_full_unit() {
-        let tests = vec![
+        let tests = crate::alloc::vec![
             ("1234 bytes", 1234),
             ("1234 kilobytes", 1234 * KB),
             ("1234 kibibytes", 1234 * KiB),
@@ -140,8 +147,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "std", feature = "f64_intermediate"))]
     fn parse_invalid_inputs() {
-        let tests = vec![
+        let tests = crate::alloc::vec![
             "Not a number",
             "1234 XB",   // Unknown suffix
             "12..34 MB", // Invalid number format
@@ -153,12 +161,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "std", feature = "f64_intermediate"))]
     fn parse_boundary() {
         assert_eq!(Size::from_str("42.0"), Ok(Size::from_bytes(42)));
         assert_eq!(Size::from_str("42.0kib "), Ok(Size::from_bytes(42 * KiB)));
     }
 
     #[test]
+    #[cfg(all(feature = "std", feature = "f64_intermediate"))]
     fn parse_scientific() {
         assert_eq!(Size::from_str("0.423E3"), Ok(Size::from_bytes(423)));
         assert_eq!(Size::from_str("423E-3 mb"), Ok(Size::from_bytes(423_000)));

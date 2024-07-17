@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(not(feature = "std"), allow(clippy::unnecessary_cast))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![warn(missing_docs)]
 
 //! This crate provides an ergonomic, type-safe, and aesthetically-pleasing [`Size`] type that can
@@ -26,8 +27,8 @@
 //! base-2 (KiB, MiB, etc) and base-10 (KB, MB, etc) units are supported and are exposed via the
 //! same API. You can either use the abbreviated form of the unit to instantiate your type, or use
 //! the full unit name to be more expressive. Here's an example:
-#![cfg_attr(not(feature = "std"), doc = "```ignore")]
-#![cfg_attr(feature = "std", doc = "```")]
+#![cfg_attr(not(feature = "f64_intermediate"), doc = "```text")]
+#![cfg_attr(feature = "f64_intermediate", doc = "```")]
 //! use size::Size;
 //!
 //! // Create a strongly-typed size object. We don't even need to specify a numeric type!
@@ -38,8 +39,8 @@
 //!
 //! You can obtain a scalar `i64` value equal to the total number of bytes described by a
 //! `Size` instance by calling [`Size::bytes()`] (see link for more info):
-#![cfg_attr(not(feature = "std"), doc = "```ignore")]
-#![cfg_attr(feature = "std", doc = "```")]
+#![cfg_attr(not(feature = "f64_intermediate"), doc = "```text")]
+#![cfg_attr(feature = "f64_intermediate", doc = "```")]
 //! use size::Size;
 //!
 //! let file_size = Size::from_gibibytes(4);
@@ -64,21 +65,22 @@
 //!
 //! The majority of users will be interested in this crate for its ability to "pretty print" sizes
 //! with little ceremony and great results. All `Size` instances implement both
-//! [`std::fmt::Display`] and [`std::fmt::Debug`], so you can just directly `format!(...)` or
+//! [`core::fmt::Display`] and [`core::fmt::Debug`], so you can just directly `alloc::format!(...)` or
 //! `println!(...)` with whatever `Size` you have on hand:
-#![cfg_attr(not(feature = "std"), doc = "```ignore")]
-#![cfg_attr(feature = "std", doc = "```")]
+#![cfg_attr(not(feature = "alloc"), doc = "```text")]
+#![cfg_attr(feature = "alloc", doc = "```")]
 //! use size::Size;
 //!
 //! let file_size = Size::from_bytes(1_340_249);
 //! let textual = format!("{}", file_size); // "1.28 MiB"
 //! assert_eq!(textual.as_str(), "1.28 MiB");
-//! ```
+#![cfg_attr(not(feature = "alloc"), doc = "```text")]
+#![cfg_attr(feature = "alloc", doc = "```")]
 //!
-//! [`Size::to_string()`](ToString::to_string) can be used to directly return a `String` containing
+//! [`Size::to_string()`](alloc::string::ToString::to_string) can be used to directly return a `String` containing
 //! the formatted, human-readable size, instead of needing to use the `format!()` macro or similar:
-#![cfg_attr(not(feature = "std"), doc = "```ignore")]
-#![cfg_attr(feature = "std", doc = "```")]
+#![cfg_attr(not(feature = "alloc"), doc = "```text")]
+#![cfg_attr(feature = "alloc", doc = "```")]
 //! use size::Size;
 //!
 //! let file_size = Size::from_bytes(1_340_249);
@@ -89,8 +91,8 @@
 //! [`Size::format()`] function, which returns a [`FormattableSize`](crate::fmt::FormattableSize)
 //! implementing the builder model to allow you to change one or more properties of how a `Size`
 //! is formatted:
-#![cfg_attr(not(feature = "std"), doc = "```ignore")]
-#![cfg_attr(feature = "std", doc = "```")]
+#![cfg_attr(not(feature = "alloc"), doc = "```text")]
+#![cfg_attr(feature = "alloc", doc = "```")]
 //! use size::{Size, Base, Style};
 //!
 //! let file_size = Size::from_bytes(1_340_249); // same as before
@@ -110,8 +112,8 @@
 //!
 //! You can perform mathematical operations on `Size` types and the type safety makes sure that
 //! what you're doing makes sense:
-#![cfg_attr(not(feature = "std"), doc = "```ignore")]
-#![cfg_attr(feature = "std", doc = "```")]
+#![cfg_attr(not(feature = "f64_intermediate"), doc = "```text")]
+#![cfg_attr(feature = "f64_intermediate", doc = "```")]
 //! use size::Size;
 //!
 //! let sum = Size::from_mib(2) + Size::from_kib(200);
@@ -119,35 +121,29 @@
 //!
 //! let size = Size::from_gb(4.2) / 2;
 //! assert_eq!(size, Size::from_gb(2.1));
-//! ```
+#![cfg_attr(not(feature = "f64_intermediate"), doc = "```text")]
+#![cfg_attr(feature = "f64_intermediate", doc = "```")]
 //!
 //! See the documentation of the [`ops`] module for more on this topic.
-//!
-//! ## Parsing sizes from text
-//!
-//! The [`Size::from_str()`] function can be used to convert the most commonly encountered textual
-//! representations of file sizes into properly typed `Size` objects, with flexible support for
-//! various input whitespace formatting, abbreviated/full unit names, mixed upper/lower-case
-//! representation, etc.
 //!
 //! ## Crate features
 //!
 //! The following crate features may be chosen:
 //! * `std` (enabled by default)
+//! * `alloc`
+//! * `f64_intermediate`
 //! * `serde`
 //!
 //! If compiled without the `std` feature (i.e. with `--no-default-features` or used as a dependency
 //! with default features disabled), the crate becomes `no_std` compatible. When used in `no_std`
 //! mode, the following restrictions and limitations are observed:
 //!
-//! * All formatting/stringification of `Size` types is disabled.
-//! * `Size` no longer implements [`std::fmt::Display`] (`core::fmt::Debug` is still implemented).
 //! * The intermediate type used for mathematical operations on `Size` types is changed from `f64`
 //! to `i64` so that no implicit floating-point math is performed. To prevent inadvertent loss of
 //! precision, it is forbidden to pass in floating point values to the `Size` API under `no_std`
-//! mode.
+//! mode. It can, however, be overridden with the `f64_intermediate` feature.
 //! * The ability to parse strings into `Size` objects (`Size::from_str()` and the `FromStr` impl)
-//! are removed.
+//! are removed if either `alloc` or `f64_intermediate` are disabled.
 //!
 //! ## Base-2 and Base-10 constants
 //!
@@ -167,9 +163,8 @@
 //! As an example, `struct File { name: String, size: Size } ` will serialize to `{ name: "name",
 //! size: 1234 }` instead of `{ name: "name", size: { bytes: 1234 }`.
 
-#[cfg(feature = "std")]
+
 pub mod fmt;
-#[cfg(feature = "std")]
 mod from_str;
 pub mod ops;
 #[cfg(feature = "serde")]
@@ -179,21 +174,21 @@ mod tests;
 #[cfg(test)]
 mod tests_nostd;
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 pub use crate::consts::*;
-#[cfg(feature = "std")]
+
 pub use crate::fmt::{Base, SizeFormatter, Style};
-#[cfg(feature = "std")]
 pub use crate::from_str::ParseSizeError;
 use crate::sealed::AsIntermediate;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "f64_intermediate")]
 type Intermediate = f64;
-#[cfg(not(feature = "std"))]
+#[cfg(not(feature = "f64_intermediate"))]
 type Intermediate = i64;
 
-#[cfg(feature = "std")]
 const DEFAULT_BASE: Base = Base::Base2;
-#[cfg(feature = "std")]
 const DEFAULT_STYLE: Style = Style::Default;
 
 mod sealed {
@@ -214,7 +209,7 @@ mod sealed {
                     // A separate implementation is required for no_std's intermediate i64 to make
                     // sure u64::MAX is clamped to i64::MAX rather than cast directly to -1. The
                     // first three checks should be elided per impl via compile-time optimization.
-                    if cfg!(not(feature = "std")) // we are in no_std mode
+                    if cfg!(not(feature = "f64_intermediate")) // we are in no_std mode
                         && <$type>::MIN == 0 as $type // it's an unsigned type
                         && size_of::<Intermediate>() >= size_of::<$type>() // with a greater +range
                         && self > SIGNED_MAX // and exceeds our max
@@ -238,9 +233,9 @@ mod sealed {
     as_intermediate!(i32);
     as_intermediate!(i64);
     as_intermediate!(isize);
-    #[cfg(feature = "std")]
+    #[cfg(feature = "f64_intermediate")]
     as_intermediate!(f32);
-    #[cfg(feature = "std")]
+    #[cfg(feature = "f64_intermediate")]
     as_intermediate!(f64);
 }
 
@@ -324,8 +319,8 @@ pub mod consts {
 ///
 /// A size can be created in terms of any supported unit and an associated numeric value of any
 /// type.
-#[cfg_attr(not(feature = "std"), doc = "```ignore")]
-#[cfg_attr(feature = "std", doc = "```")]
+#[cfg_attr(not(feature = "f64_intermediate"), doc = "```text")]
+#[cfg_attr(feature = "f64_intermediate", doc = "```")]
 /// use size::Size;
 ///
 /// // Identical sizes expressed in different units with different primitive types:

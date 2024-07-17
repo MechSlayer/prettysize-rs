@@ -7,8 +7,8 @@
 //! fine.
 //!
 //! Some examples of supported mathematical operations:
-#![cfg_attr(not(feature = "std"), doc = "```ignore")]
-#![cfg_attr(feature = "std", doc = "```")]
+#![cfg_attr(not(feature = "f64_intermediate"), doc = "```text")]
+#![cfg_attr(feature = "f64_intermediate", doc = "```")]
 //! use size::Size;
 //!
 //! // Perform scalar multiplication/division on a `Size`
@@ -146,7 +146,7 @@ macro_rules! impl_mul {
 }
 
 impl_mul!(i64);
-#[cfg(feature = "std")]
+#[cfg(feature = "f64_intermediate")]
 impl_mul!(f64);
 
 impl<T> Div<T> for Size

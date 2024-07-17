@@ -142,7 +142,7 @@ impl Style {
     pub const FullLowerCase: Style = Style::FullLowercase;
 }
 
-impl std::fmt::Display for Size {
+impl core::fmt::Display for Size {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "{}", self.format())
     }
@@ -163,7 +163,8 @@ mod sealed {
 /// approach, but it may come in handy when you have many sizes and all need to be formatted in an
 /// identical and manually-specified fashion.
 ///
-/// ```
+#[cfg_attr(any(not(feature = "alloc"), not(feature = "f64_intermediate")), doc = "```text")]
+#[cfg_attr(all(feature = "alloc", feature = "f64_intermediate"), doc = "```")]
 /// use size::{Base, Size, SizeFormatter, Style};
 ///
 /// let formatter = SizeFormatter::new()
@@ -190,7 +191,8 @@ mod sealed {
 /// # assert_eq!(sizes[0].as_str(), "1.02 KB");
 /// # assert_eq!(sizes[1].as_str(), "2.05 KB");
 /// # assert_eq!(sizes[2].as_str(), "4.10 KB");
-/// ```
+#[cfg_attr(any(not(feature = "alloc"), not(feature = "f64_intermediate")), doc = "```text")]
+#[cfg_attr(all(feature = "alloc", feature = "f64_intermediate"), doc = "```")]
 pub struct SizeFormatter<T: sealed::FormatterSize = ()> {
     size: T,
     base: Base,
@@ -288,8 +290,9 @@ impl SizeFormatter<()> {
 
     /// Formats a provided size in bytes as a string, per the configuration of the current
     /// `SizeFormatter` instance.
-    pub fn format(&self, bytes: i64) -> String {
-        format!(
+    #[cfg(feature = "alloc")]
+    pub fn format(&self, bytes: i64) -> crate::alloc::string::String {
+        crate::alloc::format!(
             "{}",
             FmtRenderer::new(|fmt: &mut fmt::Formatter| { self.inner_fmt(fmt, bytes) })
         )
@@ -300,13 +303,12 @@ impl SizeFormatter<()> {
 /// human-readable text, created by calling [`Size::format()`]. The `SizeFormatter` follows the
 /// builder model and exposes a chaining API for configuration (via the `.with_` functions).
 ///
-/// After configuration, a `FormattableSize` may be passed directly to the `println!()` or
-/// `format!()` macros and their friends because it implements [`Display`](std::fmt::Display), or
-/// [`FormattableSize::to_string()`](ToString::to_string) can be used to retrieve a `String`
-/// containing the formatted result.
+/// After configuration, a `FormattableSize` may be passed directly to the `write!()` macro
+/// and their friends because it implements [`Display`](core::fmt::Display).
 ///
 /// Example:
-/// ```
+#[cfg_attr(all(not(feature = "alloc"), not(feature = "f64_intermediate")), doc = "```text")]
+#[cfg_attr(all(feature = "alloc", feature = "f64_intermediate"), doc = "```")]
 /// use size::{Base, Size, Style};
 ///
 /// let size = Size::from_mib(1.907349);
@@ -316,7 +318,8 @@ impl SizeFormatter<()> {
 ///     .to_string();
 ///
 /// assert_eq!(text.as_str(), "2.00 Megabytes");
-/// ```
+#[cfg_attr(all(not(feature = "alloc"), not(feature = "f64_intermediate")), doc = "```text")]
+#[cfg_attr(all(feature = "alloc", feature = "f64_intermediate"), doc = "```")]
 pub type FormattableSize<'a> = SizeFormatter<&'a Size>;
 
 impl fmt::Display for FormattableSize<'_> {
@@ -331,7 +334,8 @@ impl Size {
     /// used to express the determined unit (see [`Style`]).
     ///
     /// Example:
-    /// ```
+    #[cfg_attr(all(not(feature = "alloc"), not(feature = "f64_intermediate")), doc = "```text")]
+    #[cfg_attr(all(feature = "alloc", feature = "f64_intermediate"), doc = "```")]
     /// use size::{Base, Size, Style};
     ///
     /// let size = Size::from_mib(1.907349);
@@ -341,11 +345,12 @@ impl Size {
     ///     .to_string();
     ///
     /// assert_eq!(text.as_str(), "2.00 Megabytes");
-    /// ```
+    #[cfg_attr(all(not(feature = "alloc"), not(feature = "f64_intermediate")), doc = "```text")]
+    #[cfg_attr(all(feature = "alloc", feature = "f64_intermediate"), doc = "```")]
     ///
     /// It is not necessary to call `.to_string()` if you are passing the formatted size to a
     /// `format!()` macro or similar (e.g. `println!` and friends), as the result implements
-    /// [`Display`](std::fmt::Display) and will resolve to the same text.
+    /// [`Display`](core::fmt::Display) and will resolve to the same text.
     pub fn format(&self) -> FormattableSize {
         FormattableSize {
             size: self,
